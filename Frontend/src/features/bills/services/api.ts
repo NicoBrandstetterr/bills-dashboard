@@ -53,4 +53,41 @@ export async function deleteBill(id: number): Promise<void> {
   });
   if (!res.ok) throw new Error(await res.text());
 }
+
+export async function uploadBillsJsonFile(file: File): Promise<any> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE}/bills/upload-json/`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    try {
+      const j = JSON.parse(txt);
+      throw new Error(j.detail || j.error || JSON.stringify(j));
+    } catch {
+      throw new Error(txt || "Upload failed");
+    }
+  }
+  return res.json();
+}
+
+export async function uploadBillsJson(payload: object | object[]): Promise<any> {
+  const res = await fetch(`${API_BASE}/bills/upload-json/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    try {
+      const j = JSON.parse(txt);
+      throw new Error(j.detail || j.error || JSON.stringify(j));
+    } catch {
+      throw new Error(txt || "Upload failed");
+    }
+  }
+  return res.json();
+}
  
