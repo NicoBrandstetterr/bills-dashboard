@@ -44,6 +44,7 @@ export default function BillsTable({ bills, newRows, setNewRows, tags, updateBil
   const [editValues, setEditValues] = useState<Record<number, { name: string; value: string; type: string; tags_ids: number[]; day?: number }>>({});
   const [editPopupId, setEditPopupId] = useState<number | null>(null);
   const editPopupRef = useRef<HTMLDivElement | null>(null);
+  const [focusField, setFocusField] = useState<{ id: number; field?: string } | null>(null);
 
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
@@ -68,6 +69,15 @@ export default function BillsTable({ bills, newRows, setNewRows, tags, updateBil
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [openIndex, editPopupId]);
+
+  useEffect(() => {
+    if (focusField && editingId === focusField.id) {
+      const selector = `[data-edit-input="${focusField.field}-${focusField.id}"]`;
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el) el.focus();
+      setFocusField(null);
+    }
+  }, [editingId, focusField]);
 
   function startEditing(b: Bill) {
     setEditingId(b.id);
@@ -97,6 +107,8 @@ export default function BillsTable({ bills, newRows, setNewRows, tags, updateBil
       toast.error("Failed to save bill");
     }
   }
+  const sortedBills = [...bills].sort((a, b) => (b.day ?? 0) - (a.day ?? 0));
+
   return (
     <div className="group">
       <table className="w-full table-auto">
@@ -111,24 +123,24 @@ export default function BillsTable({ bills, newRows, setNewRows, tags, updateBil
           </tr>
         </thead>
         <tbody>
-        {bills.map((b) => (
-          <tr key={b.id} className="border-t" onDoubleClick={() => startEditing(b)}>
+        {sortedBills.map((b) => (
+          <tr key={b.id} className="border-t">
             {editingId === b.id ? (
               <>
                 <td className="px-2 py-1">
-                  <input value={editValues[b.id]?.name ?? ""} onChange={(e) => updateEditValue(b.id, "name", e.target.value)} className="w-full border rounded p-1" />
+                  <input data-edit-input={`name-${b.id}`} value={editValues[b.id]?.name ?? ""} onChange={(e) => updateEditValue(b.id, "name", e.target.value)} className="w-full border rounded p-1" />
                 </td>
                 <td className="px-2 py-1">
-                  <input value={editValues[b.id]?.value ?? ""} onChange={(e) => updateEditValue(b.id, "value", e.target.value)} className="w-full border rounded p-1" />
+                  <input data-edit-input={`value-${b.id}`} value={editValues[b.id]?.value ?? ""} onChange={(e) => updateEditValue(b.id, "value", e.target.value)} className="w-full border rounded p-1" />
                 </td>
                 <td className="px-2 py-1">
-                  <select value={editValues[b.id]?.type ?? "expense"} onChange={(e) => updateEditValue(b.id, "type", e.target.value)} className="border rounded p-1">
+                  <select data-edit-input={`type-${b.id}`} value={editValues[b.id]?.type ?? "expense"} onChange={(e) => updateEditValue(b.id, "type", e.target.value)} className="border rounded p-1">
                     <option value="income">income</option>
                     <option value="expense">expense</option>
                   </select>
                 </td>
                 <td className="px-2 py-1">
-                  <input type="number" min={1} max={31} value={editValues[b.id]?.day ?? new Date().getDate()} onChange={(e) => updateEditValue(b.id, "day", Number(e.target.value))} className="w-20 border rounded p-1" />
+                  <input data-edit-input={`day-${b.id}`} type="number" min={1} max={31} value={editValues[b.id]?.day ?? new Date().getDate()} onChange={(e) => updateEditValue(b.id, "day", Number(e.target.value))} className="w-20 border rounded p-1" />
                 </td>
                 <td className="px-2 py-1">
                   <div className="relative inline-block">
@@ -143,6 +155,7 @@ export default function BillsTable({ bills, newRows, setNewRows, tags, updateBil
                     {editPopupId === b.id && (
                       <div data-edit-popup-row={b.id} ref={editPopupRef} className="absolute z-50 mt-2 right-0 w-72 bg-white border rounded shadow-lg p-2">
                         <input
+                          data-edit-input={`tags-${b.id}`}
                           type="text"
                           placeholder="Buscar tags..."
                           value={filters[b.id] ?? ""}
@@ -215,11 +228,11 @@ export default function BillsTable({ bills, newRows, setNewRows, tags, updateBil
               </>
             ) : (
               <>
-                <td className="px-2 py-1">{b.name}</td>
-                <td className="px-2 py-1">${b.value}</td>
-                <td className="px-2 py-1">{b.type}</td>
-                <td className="px-2 py-1">{b.day ?? "-"}</td>
-                <td className="px-2 py-1">
+                <td className="px-2 py-1 cursor-pointer" onClick={() => { startEditing(b); setFocusField({ id: b.id, field: "name" }); }}>{b.name}</td>
+                <td className="px-2 py-1 cursor-pointer" onClick={() => { startEditing(b); setFocusField({ id: b.id, field: "value" }); }}>{`$${b.value}`}</td>
+                <td className="px-2 py-1 cursor-pointer" onClick={() => { startEditing(b); setFocusField({ id: b.id, field: "type" }); }}>{b.type}</td>
+                <td className="px-2 py-1 cursor-pointer" onClick={() => { startEditing(b); setFocusField({ id: b.id, field: "day" }); }}>{b.day ?? "-"}</td>
+                <td className="px-2 py-1 cursor-pointer" onClick={() => { startEditing(b); setFocusField({ id: b.id, field: "tags" }); setEditPopupId(b.id); }}>
                   {(b.tags && b.tags.length > 0) ? b.tags.map((t) => t.name).join(", ") : "-"}
                 </td>
                 <td className="px-2 py-1 flex items-center gap-2">

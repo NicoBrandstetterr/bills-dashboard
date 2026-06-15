@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { useBills } from "../hooks/useBills";
 import BillsTable from "./BillsTable";
 import { Check, X, ArrowUp, ArrowDown, Equal } from "lucide-react";
-import type { BillPayload } from "../services/api";
+import type { BillPayload, Bill } from "../services/api";
 import { uploadBillsJsonFile, uploadBillsJson } from "../services/api";
 import type {billRow} from "../model/billsRow.type";
 import type { Tag } from "../../../shared/types";
@@ -26,20 +25,19 @@ interface saveRowsParams {
   setNewRows: React.Dispatch<React.SetStateAction<Array<billRow>>>;
 }
 
-function useMonthlyBills() {
-    const [month, setMonth] = useState<string>(() => {
-      const now = new Date();
-      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    });
-    const { bills, loading, reload, addBill, updateBill, deleteBill } = useBills(month);
-    return { month, setMonth, bills, loading, reload, addBill, updateBill, deleteBill } as const;
-  }
 interface Props {
   tags: Tag[];
+  month: string;
+  setMonth: React.Dispatch<React.SetStateAction<string>>;
+  bills: Bill[];
+  loading: boolean;
+  reload: () => Promise<void>;
+  addBill: (payload: BillPayload) => Promise<void>;
+  updateBill: (id: number, payload: Partial<BillPayload>) => Promise<void>;
+  deleteBill: (id: number) => Promise<void>;
 }
 
-export default function BillsFeature({ tags }: Props): React.ReactElement {
-  const { month, setMonth, bills, loading, reload, addBill, updateBill, deleteBill } = useMonthlyBills();
+export default function BillsFeature({ tags, month, setMonth, bills, loading, reload, addBill, updateBill, deleteBill }: Props): React.ReactElement {
   const [newRows, setNewRows] = useState<Array<billRow>>([]);
   const [jsonFile, setJsonFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
