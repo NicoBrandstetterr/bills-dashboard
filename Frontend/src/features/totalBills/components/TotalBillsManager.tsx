@@ -6,10 +6,22 @@ import type { Tag } from "../../../shared/types";
 interface Props {
   month?: string;
   tags?: Tag[];
+  refreshKey?: any;
 }
 
-export default function TotalBillsManager({ month, tags = [] }: Props) {
-  const { items, loading } = useTotalBills(tags, month);
+export default function TotalBillsManager({ month, tags = [], refreshKey }: Props) {
+  const { items, loading, reload } = useTotalBills(tags, month);
+
+  React.useEffect(() => {
+    // ensure we reload when external refreshKey changes
+    (async () => {
+      try {
+        await reload(month);
+      } catch {
+        // ignore
+      }
+    })();
+  }, [reload, month, tags, refreshKey]);
 
   return (
     <div className="w-80 p-4 border-l bg-white shadow rounded">

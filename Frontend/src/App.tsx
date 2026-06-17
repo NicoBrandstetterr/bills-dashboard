@@ -15,6 +15,13 @@ export default function App(): React.ReactElement {
   });
 
   const { bills, loading: billsLoading, reload, addBill, updateBill, deleteBill } = useBills(month);
+  const [totalsRefreshKey, setTotalsRefreshKey] = useState<number>(0);
+
+  const handleTagEdit = async (id: number, name: string) => {
+    const t = await edit(id, name);
+    setTotalsRefreshKey((k) => k + 1);
+    return t;
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -25,8 +32,8 @@ export default function App(): React.ReactElement {
             <WishListFeature />
           </div>
           <div className="flex flex-col gap-4">
-            <TagsManager tags={tags} loading={loading} onAdd={add} onEdit={edit} onDelete={remove} containerClassName="max-h-96 overflow-auto" />
-            <TotalBillsManager tags={tags} month={month} />
+            <TagsManager tags={tags} loading={loading} onAdd={add} onEdit={handleTagEdit} onDelete={remove} containerClassName="max-h-96 overflow-auto" />
+            <TotalBillsManager tags={tags} month={month} refreshKey={totalsRefreshKey} />
           </div>
         </div>
       </div>
